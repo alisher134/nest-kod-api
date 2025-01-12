@@ -2,14 +2,17 @@ import { Body, Controller, HttpCode, HttpStatus, Post, Req, Res, UseGuards } fro
 import { ConfigService } from '@nestjs/config';
 import { Request, Response } from 'express';
 
+import { CurrentUser } from '@modules/user/decorators/user.decorator';
+
 import { isProduction } from '@common/utils/production.utils';
 
 import { TOKEN_CONSTANTS } from './constants/token.constant';
 import { LoginDto } from './dtos/login.dto';
 import { RegisterDto } from './dtos/register.dto';
+import { AccessTokenGuard } from './guards/access-token.guard';
 import { RefreshTokenGuard } from './guards/refresh-token.guard';
 import { AuthService } from './services/auth.service';
-import { TAccessToken } from './types/auth.interface';
+import { TAccessToken } from './types/auth.types';
 
 @Controller('auth')
 export class AuthController {
@@ -62,8 +65,18 @@ export class AuthController {
 
   @Post('logout')
   @HttpCode(HttpStatus.OK)
-  logout(@Res({ passthrough: true }) res: Response): void {
-    res.clearCookie(TOKEN_CONSTANTS.REFRESH_TOKEN_COOKIE);
+  @UseGuards(AccessTokenGuard)
+  async logout(
+    @CurrentUser('id') id: string,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<void> {
+    await this.authService.logout(id);
+    res.clearCookie(TOKEN_CONSTANTS.REFRESH_TOKEN_COOKIE, {
+      httpOnly: true,
+      secure: isProduction,
+      domain: this.configService.getOrThrow<string>('DOMAIN'),
+      sameSite: 'lax',
+    });
   }
 
   private setRefreshTokenToCookie(res: Response, refreshToken: string): void {
@@ -72,8 +85,8 @@ export class AuthController {
 
     res.cookie(TOKEN_CONSTANTS.REFRESH_TOKEN_COOKIE, refreshToken, {
       httpOnly: true,
-      domain: this.configService.getOrThrow<string>('DOMAIN'),
       secure: isProduction,
+      domain: this.configService.getOrThrow<string>('DOMAIN'),
       sameSite: 'lax',
       expires: expiresIn,
     });

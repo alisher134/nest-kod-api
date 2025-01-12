@@ -1,23 +1,42 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma, User } from '@prisma/client';
-import { argon2id, hash } from 'argon2';
+import { hash } from 'argon2';
 
 import { RegisterDto } from '@modules/auth/dtos/register.dto';
 import { PrismaService } from '@modules/prisma/prisma.service';
+import { RedisService } from '@modules/redis/redis.service';
 
 @Injectable()
 export class UserService {
-  constructor(private readonly prismaService: PrismaService) {}
+  constructor(
+    private readonly prismaService: PrismaService,
+    private readonly redisService: RedisService,
+  ) {}
 
   async findOneById(id: string): Promise<User | null> {
-    const user = await this.prismaService.user.findUnique({ where: { id } });
-    if (!user) throw new NotFoundException('User not found!');
+    const cachedUser = await this.redisService.get(`user:${id}`);
+    if (!cachedUser) {
+      const user = await this.prismaService.user.findUnique({ where: { id } });
+      if (!user) throw new NotFoundException('User not found!');
 
-    return user;
+      await this.redisService.set(`user:${id}`, JSON.stringify(user));
+
+      return user;
+    }
+    return JSON.parse(cachedUser);
   }
 
   async findOneByEmail(email: string): Promise<User> {
-    return await this.prismaService.user.findUnique({ where: { email } });
+    const cachedUser = await this.redisService.get(`user:${email}`);
+    if (!cachedUser) {
+      const user = await this.prismaService.user.findUnique({ where: { email } });
+
+      await this.redisService.set(`user:${email}`, JSON.stringify(user));
+
+      return user;
+    }
+
+    return JSON.parse(cachedUser);
   }
 
   async create(dto: RegisterDto): Promise<User> {
@@ -28,15 +47,15 @@ export class UserService {
       passwordHash: await this.hashPassword(dto.password),
     };
 
-    return await this.prismaService.user.create({ data: userData });
+    const user = await this.prismaService.user.create({ data: userData });
+
+    await this.redisService.set(`user:${user.id}`, JSON.stringify(user));
+    await this.redisService.set(`user:${user.email}`, JSON.stringify(user));
+
+    return user;
   }
 
   private async hashPassword(password: string): Promise<string> {
-    return await hash(password, {
-      type: argon2id,
-      memoryCost: 2 ** 17,
-      timeCost: 5,
-      parallelism: 2,
-    });
+    return await hash(password);
   }
 }

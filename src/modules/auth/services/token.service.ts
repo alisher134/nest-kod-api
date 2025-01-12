@@ -2,51 +2,89 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 
-import { getTokenConfig } from '@configs/token.config';
+import { RedisService } from '@modules/redis/redis.service';
 
-import { ITokenPayload, ITokens } from '../types/auth.interface';
-import { BaseTokenPayload, TokenConfigs, TokenType } from '../types/token.types';
+import { parseExpiresIn } from '@common/utils/token.utils';
+
+import { TOKEN_CONSTANTS } from '../constants/token.constant';
+import { ITokenPayload, ITokens } from '../types/auth.types';
+import { IBaseTokenPayload, ITokenOptions, TTokenType } from '../types/token.types';
 
 @Injectable()
 export class TokenService {
-  private readonly tokenConfigs: TokenConfigs;
-
   constructor(
     private readonly configService: ConfigService,
     private readonly jwtService: JwtService,
-  ) {
-    this.tokenConfigs = getTokenConfig(configService);
-  }
+    private readonly redisService: RedisService,
+  ) {}
 
   async generateTokenPair(payload: ITokenPayload): Promise<ITokens> {
+    const accessTokenOptions = {
+      expiresIn: this.configService.get<string>(
+        TOKEN_CONSTANTS.ACCESS_EXP,
+        TOKEN_CONSTANTS.DEFAULT_ACCESS_EXP,
+      ),
+      secret: this.configService.getOrThrow<string>(TOKEN_CONSTANTS.ACCESS_SECRET),
+    };
+
+    const refreshTokenOptions = {
+      expiresIn: this.configService.get<string>(
+        TOKEN_CONSTANTS.REFRESH_EXP,
+        TOKEN_CONSTANTS.DEFAULT_REFRESH_EXP,
+      ),
+      secret: this.configService.getOrThrow<string>(TOKEN_CONSTANTS.REFRESH_SECRET),
+    };
+
     const [accessToken, refreshToken] = await Promise.all([
-      this.generateToken(payload, 'access'),
-      this.generateToken(payload, 'refresh'),
+      this.generateToken(payload, accessTokenOptions),
+      this.generateToken(payload, refreshTokenOptions),
     ]);
+
+    await Promise.all([
+      this.redisService.set(
+        `accessToken:${payload.id}`,
+        accessToken,
+        parseExpiresIn(accessTokenOptions.expiresIn),
+      ),
+      this.redisService.set(
+        `refreshToken:${payload.id}`,
+        refreshToken,
+        parseExpiresIn(refreshTokenOptions.expiresIn),
+      ),
+    ]);
+
     return { accessToken, refreshToken };
   }
 
-  async verifyToken<T extends BaseTokenPayload>(token: string, type: TokenType): Promise<T> {
-    try {
-      const config = this.tokenConfigs[type];
+  async invalidateTokens(userId: string): Promise<void> {
+    await Promise.all([
+      this.redisService.del(`accessToken:${userId}`),
+      this.redisService.del(`refreshToken:${userId}`),
+    ]);
+  }
 
-      return await this.jwtService.verifyAsync(token, {
-        secret: config.secret,
-      });
+  async verifyToken<T extends IBaseTokenPayload>(
+    token: string,
+    type: TTokenType,
+    options: ITokenOptions,
+  ): Promise<T> {
+    try {
+      const payload = await this.jwtService.verifyAsync(token, options);
+
+      const cachedToken = await this.redisService.get(`${type}:${payload.id}`);
+      if (!cachedToken || cachedToken !== token)
+        throw new UnauthorizedException('jwt expired or invalid');
+
+      return payload;
     } catch (error) {
       throw new UnauthorizedException(error);
     }
   }
 
-  private async generateToken<T extends BaseTokenPayload>(
+  private async generateToken<T extends IBaseTokenPayload>(
     payload: T,
-    type: TokenType,
+    options: ITokenOptions,
   ): Promise<string> {
-    const config = this.tokenConfigs[type];
-
-    return await this.jwtService.signAsync(payload, {
-      secret: config.secret,
-      expiresIn: config.expiresIn,
-    });
+    return await this.jwtService.signAsync(payload, options);
   }
 }

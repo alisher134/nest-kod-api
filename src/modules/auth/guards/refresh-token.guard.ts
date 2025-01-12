@@ -20,7 +20,9 @@ export class RefreshTokenGuard implements CanActivate {
       throw new UnauthorizedException('refresh token not be provided');
     }
 
-    const payload = await this.tokenService.verifyToken(refreshToken, 'refresh');
+    const payload = await this.tokenService.verifyToken(refreshToken, 'refreshToken', {
+      secret: this.configService.getOrThrow<string>(TOKEN_CONSTANTS.REFRESH_SECRET),
+    });
     request.user = payload;
 
     return true;
