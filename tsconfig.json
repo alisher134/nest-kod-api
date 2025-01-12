@@ -13,7 +13,8 @@
     "paths": {
       "@configs/*": ["./src/configs/*"],
       "@modules/*": ["./src/modules/*"],
-      "@common/*": ["./src/common/*"]
+      "@common/*": ["./src/common/*"],
+      "@generated/*": ["./src/generated/*"]
     },
     "incremental": true,
     "skipLibCheck": true,

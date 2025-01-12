@@ -1,10 +1,13 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
+import { I18nService } from 'nestjs-i18n';
 
 import { RedisService } from '@modules/redis/redis.service';
 
 import { parseExpiresIn } from '@common/utils/token.utils';
+
+import { I18nTranslations } from '@generated/i18n.generated';
 
 import { TOKEN_CONSTANTS } from '../constants/token.constant';
 import { ITokenPayload, ITokens } from '../types/auth.types';
@@ -16,6 +19,7 @@ export class TokenService {
     private readonly configService: ConfigService,
     private readonly jwtService: JwtService,
     private readonly redisService: RedisService,
+    private readonly i18nService: I18nService<I18nTranslations>,
   ) {}
 
   async generateTokenPair(payload: ITokenPayload): Promise<ITokens> {
@@ -72,7 +76,7 @@ export class TokenService {
 
     const cachedToken = await this.redisService.get(`${type}:${payload.id}`);
     if (!cachedToken || cachedToken !== token)
-      throw new UnauthorizedException('Token has been invalidated or is invalid');
+      throw new UnauthorizedException(this.i18nService.t('auth.refreshTokenMissing'));
 
     return payload;
   }

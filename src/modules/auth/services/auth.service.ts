@@ -2,9 +2,12 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { User } from '@prisma/client';
 import { verify } from 'argon2';
+import { I18nService } from 'nestjs-i18n';
 
 import { RedisService } from '@modules/redis/redis.service';
 import { UserService } from '@modules/user/user.service';
+
+import { I18nTranslations } from '@generated/i18n.generated';
 
 import { TOKEN_CONSTANTS } from '../constants/token.constant';
 import { LoginDto } from '../dtos/login.dto';
@@ -20,13 +23,14 @@ export class AuthService {
     private readonly tokenService: TokenService,
     private readonly configService: ConfigService,
     private readonly redisService: RedisService,
+    private readonly i18nService: I18nService<I18nTranslations>,
   ) {}
 
   //TODO: что то для неудачных попыток входа
 
   async register(dto: RegisterDto): Promise<ITokens> {
     const isExists = await this.userService.findOneByEmail(dto.email);
-    if (isExists) throw new BadRequestException('User with this email is already in use!');
+    if (isExists) throw new BadRequestException(this.i18nService.t('auth.isExist'));
 
     const user = await this.userService.create(dto);
     return await this.tokenService.generateTokenPair({ id: user.id });
@@ -43,11 +47,11 @@ export class AuthService {
 
   private async validateUser(dto: LoginDto): Promise<User> {
     const user = await this.userService.findOneByEmail(dto.email);
-    if (!user) throw new BadRequestException('Invalid email or password!');
+    if (!user) throw new BadRequestException(this.i18nService.t('auth.isExist'));
 
     const isValidPassword = await verify(user.passwordHash, dto.password);
     if (!isValidPassword) {
-      throw new BadRequestException('Invalid email or password!');
+      throw new BadRequestException(this.i18nService.t('auth.isExist'));
     }
 
     return user;
