@@ -10,18 +10,14 @@ export class UserService {
   constructor(private readonly prismaService: PrismaService) {}
 
   async findOneById(id: string): Promise<User | null> {
-    const user = await this.prismaService.user.findUnique({
-      where: { id },
-    });
+    const user = await this.prismaService.user.findUnique({ where: { id } });
     if (!user) throw new NotFoundException('User not found!');
 
     return user;
   }
 
   async findOneByEmail(email: string): Promise<User> {
-    return await this.prismaService.user.findUnique({
-      where: { email },
-    });
+    return await this.prismaService.user.findUnique({ where: { email } });
   }
 
   async create(dto: RegisterDto): Promise<User> {
@@ -32,9 +28,7 @@ export class UserService {
       passwordHash: await this.hashPassword(dto.password),
     };
 
-    return await this.prismaService.user.create({
-      data: userData,
-    });
+    return await this.prismaService.user.create({ data: userData });
   }
 
   private async hashPassword(password: string): Promise<string> {

@@ -1,14 +1,4 @@
-import {
-  Body,
-  Controller,
-  HttpCode,
-  HttpStatus,
-  Post,
-  Req,
-  Res,
-  UnauthorizedException,
-  UseGuards,
-} from '@nestjs/common';
+import { Body, Controller, HttpCode, HttpStatus, Post, Req, Res, UseGuards } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Request, Response } from 'express';
 
@@ -34,11 +24,11 @@ export class AuthController {
     @Body() dto: RegisterDto,
     @Res({ passthrough: true }) res: Response,
   ): Promise<TAccessToken> {
-    const tokens = await this.authService.register(dto);
+    const { refreshToken, accessToken } = await this.authService.register(dto);
 
-    this.setRefreshTokenToCookie(res, tokens.refreshToken);
+    this.setRefreshTokenToCookie(res, refreshToken);
 
-    return { accessToken: tokens.accessToken };
+    return { accessToken };
   }
 
   @Post('login')
@@ -47,11 +37,11 @@ export class AuthController {
     @Body() dto: LoginDto,
     @Res({ passthrough: true }) res: Response,
   ): Promise<TAccessToken> {
-    const tokens = await this.authService.login(dto);
+    const { refreshToken, accessToken } = await this.authService.login(dto);
 
-    this.setRefreshTokenToCookie(res, tokens.refreshToken);
+    this.setRefreshTokenToCookie(res, refreshToken);
 
-    return { accessToken: tokens.accessToken };
+    return { accessToken };
   }
 
   @Post('refresh')
@@ -63,11 +53,11 @@ export class AuthController {
   ): Promise<TAccessToken> {
     const refreshTokenFromCookie = req.cookies[TOKEN_CONSTANTS.REFRESH_TOKEN_COOKIE];
 
-    const tokens = await this.authService.refresh(refreshTokenFromCookie);
+    const { refreshToken, accessToken } = await this.authService.refresh(refreshTokenFromCookie);
 
-    this.setRefreshTokenToCookie(res, tokens.refreshToken);
+    this.setRefreshTokenToCookie(res, refreshToken);
 
-    return { accessToken: tokens.accessToken };
+    return { accessToken };
   }
 
   @Post('logout')
@@ -77,10 +67,6 @@ export class AuthController {
   }
 
   private setRefreshTokenToCookie(res: Response, refreshToken: string): void {
-    if (!refreshToken) {
-      throw new UnauthorizedException();
-    }
-
     const expiresIn = new Date();
     expiresIn.setDate(expiresIn.getDate() + TOKEN_CONSTANTS.REFRESH_TOKEN_COOKIE_EXP);
 
