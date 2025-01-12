@@ -47,9 +47,9 @@ export class AuthController {
     return { accessToken };
   }
 
+  @UseGuards(RefreshTokenGuard)
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
-  @UseGuards(RefreshTokenGuard)
   async refresh(
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
@@ -63,9 +63,9 @@ export class AuthController {
     return { accessToken };
   }
 
+  @UseGuards(AccessTokenGuard)
   @Post('logout')
   @HttpCode(HttpStatus.OK)
-  @UseGuards(AccessTokenGuard)
   async logout(
     @CurrentUser('id') id: string,
     @Res({ passthrough: true }) res: Response,

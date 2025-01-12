@@ -68,17 +68,13 @@ export class TokenService {
     type: TTokenType,
     options: ITokenOptions,
   ): Promise<T> {
-    try {
-      const payload = await this.jwtService.verifyAsync(token, options);
+    const payload = await this.jwtService.verifyAsync(token, options);
 
-      const cachedToken = await this.redisService.get(`${type}:${payload.id}`);
-      if (!cachedToken || cachedToken !== token)
-        throw new UnauthorizedException('jwt expired or invalid');
+    const cachedToken = await this.redisService.get(`${type}:${payload.id}`);
+    if (!cachedToken || cachedToken !== token)
+      throw new UnauthorizedException('Token has been invalidated or is invalid');
 
-      return payload;
-    } catch (error) {
-      throw new UnauthorizedException(error);
-    }
+    return payload;
   }
 
   private async generateToken<T extends IBaseTokenPayload>(
