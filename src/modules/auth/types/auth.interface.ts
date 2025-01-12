@@ -7,6 +7,6 @@ export interface ITokens {
   refreshToken: string;
 }
 
-export interface IJwtPayload {
+export interface ITokenPayload {
   id: string;
 }
