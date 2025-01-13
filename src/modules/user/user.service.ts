@@ -10,13 +10,11 @@ import { RedisService } from '@modules/redis/redis.service';
 import { I18nTranslations } from '@generated/i18n.generated';
 
 import { UpdateUserDto } from './dtos/update-user.dto';
+import { USER_CONSTANTS } from './user.constants';
 import { IProfile } from './user.types';
 
 @Injectable()
 export class UserService {
-  private readonly CACHE_TTL = 1800;
-  private readonly CACHE_KEY = 'user';
-
   constructor(
     private readonly prismaService: PrismaService,
     private readonly redisService: RedisService,
@@ -32,14 +30,16 @@ export class UserService {
   }
 
   async findOneById(id: string): Promise<User | null> {
-    const cacheKey = `user:${id}`;
-
-    const cachedUser = await this.redisService.get(cacheKey);
+    const cachedUser = await this.redisService.get(USER_CONSTANTS.USER_KEY(id));
     if (!cachedUser) {
       const user = await this.prismaService.user.findUnique({ where: { id } });
       if (!user) throw new NotFoundException(this.i18nService.t('user.notFound'));
 
-      await this.redisService.set(`${this.CACHE_KEY}:${id}`, JSON.stringify(user), this.CACHE_TTL);
+      await this.redisService.set(
+        USER_CONSTANTS.USER_KEY(id),
+        JSON.stringify(user),
+        USER_CONSTANTS.CACHE_TTL,
+      );
 
       return user;
     }
@@ -47,16 +47,14 @@ export class UserService {
   }
 
   async findOneByEmail(email: string): Promise<User> {
-    const cacheKey = `user:${email}`;
-
-    const cachedUser = await this.redisService.get(cacheKey);
+    const cachedUser = await this.redisService.get(USER_CONSTANTS.USER_KEY(email));
     if (!cachedUser) {
       const user = await this.prismaService.user.findUnique({ where: { email } });
 
       await this.redisService.set(
-        `${this.CACHE_KEY}:${email}`,
+        USER_CONSTANTS.USER_KEY(email),
         JSON.stringify(user),
-        this.CACHE_TTL,
+        USER_CONSTANTS.CACHE_TTL,
       );
 
       return user;
@@ -76,11 +74,15 @@ export class UserService {
     const user = await this.prismaService.user.create({ data: userData });
 
     await Promise.all([
-      this.redisService.set(`${this.CACHE_KEY}:${user.id}`, JSON.stringify(user), this.CACHE_TTL),
       this.redisService.set(
-        `${this.CACHE_KEY}:${user.email}`,
+        USER_CONSTANTS.USER_KEY(user.id),
         JSON.stringify(user),
-        this.CACHE_TTL,
+        USER_CONSTANTS.CACHE_TTL,
+      ),
+      this.redisService.set(
+        USER_CONSTANTS.USER_KEY(user.email),
+        JSON.stringify(user),
+        USER_CONSTANTS.CACHE_TTL,
       ),
     ]);
 
@@ -101,8 +103,8 @@ export class UserService {
     });
 
     await Promise.all([
-      this.redisService.del(`${this.CACHE_KEY}:${id}`),
-      this.redisService.del(`${this.CACHE_KEY}:${updateUser.email}`),
+      this.redisService.del(USER_CONSTANTS.USER_KEY(id)),
+      this.redisService.del(USER_CONSTANTS.USER_KEY(updateUser.email)),
     ]);
 
     return updateUser;

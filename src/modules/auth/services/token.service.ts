@@ -46,12 +46,12 @@ export class TokenService {
 
     await Promise.all([
       this.redisService.set(
-        `accessToken:${payload.id}`,
+        TOKEN_CONSTANTS.ACCESS_TOKEN_KEY(payload.id),
         accessToken,
         parseExpiresIn(accessTokenOptions.expiresIn),
       ),
       this.redisService.set(
-        `refreshToken:${payload.id}`,
+        TOKEN_CONSTANTS.REFRESH_TOKEN_KEY(payload.id),
         refreshToken,
         parseExpiresIn(refreshTokenOptions.expiresIn),
       ),
@@ -62,8 +62,8 @@ export class TokenService {
 
   async invalidateTokens(userId: string): Promise<void> {
     await Promise.all([
-      this.redisService.del(`accessToken:${userId}`),
-      this.redisService.del(`refreshToken:${userId}`),
+      this.redisService.del(TOKEN_CONSTANTS.ACCESS_TOKEN_KEY(userId)),
+      this.redisService.del(TOKEN_CONSTANTS.REFRESH_TOKEN_KEY(userId)),
     ]);
   }
 

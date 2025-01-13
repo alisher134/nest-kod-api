@@ -5,6 +5,7 @@ export type I18nTranslations = {
     refreshTokenMissing: string;
     refreshTokenInvalid: string;
     rights: string;
+    tooManyAttempts: string;
   };
   user: {
     notFound: string;
