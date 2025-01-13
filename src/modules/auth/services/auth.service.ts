@@ -61,19 +61,25 @@ export class AuthService {
   }
 
   async refresh(refreshToken: string): Promise<ITokens> {
-    const payload: ITokenPayload = await this.tokenService.verifyToken(
-      refreshToken,
-      'refreshToken',
-      {
-        secret: this.configService.getOrThrow<string>(TOKEN_CONSTANTS.REFRESH_SECRET),
-      },
-    );
+    try {
+      const payload: ITokenPayload = await this.tokenService.verifyToken(
+        refreshToken,
+        'refreshToken',
+        {
+          secret: this.configService.getOrThrow<string>(TOKEN_CONSTANTS.REFRESH_SECRET),
+        },
+      );
 
-    const user = await this.userService.findOneById(payload.id);
+      const user = await this.userService.findOneById(payload.id);
 
-    await this.tokenService.invalidateTokens(user.id);
+      await this.tokenService.invalidateTokens(user.id);
 
-    return await this.tokenService.generateTokenPair({ id: user.id });
+      this.logger.log(`User refresh token successful: ${user.email}`);
+
+      return await this.tokenService.generateTokenPair({ id: user.id });
+    } catch (error) {
+      throw error;
+    }
   }
 
   async logout(userId: string): Promise<void> {

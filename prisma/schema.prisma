@@ -21,15 +21,9 @@ model User {
   description String?
   avatarPath  String? @map("avatar_path")
 
-  gender UserGender @default(MALE)
-  role   UserRole   @default(STUDENT)
+  role UserRole @default(STUDENT)
 
   @@map("user")
-}
-
-enum UserGender {
-  MALE
-  FEMALE
 }
 
 enum UserRole {

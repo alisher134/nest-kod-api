@@ -1,4 +1,4 @@
-import { UserGender, UserRole } from '@prisma/client';
+import { UserRole } from '@prisma/client';
 import { IsEnum, IsOptional, IsString, MinLength } from 'class-validator';
 import { i18nValidationMessage } from 'nestjs-i18n';
 
@@ -31,12 +31,6 @@ export class UpdateUserDto {
     message: i18nValidationMessage<I18nTranslations>('user.validation.description.min'),
   })
   description: string;
-
-  @IsOptional()
-  @IsEnum(UserGender, {
-    message: i18nValidationMessage<I18nTranslations>('user.validation.gender.enum'),
-  })
-  gender: UserGender;
 
   @IsOptional()
   @IsEnum(UserRole, {

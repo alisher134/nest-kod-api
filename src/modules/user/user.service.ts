@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { Prisma, User } from '@prisma/client';
 import { hash } from 'argon2';
 import { I18nService } from 'nestjs-i18n';
@@ -15,6 +15,7 @@ import { IProfile } from './user.types';
 
 @Injectable()
 export class UserService {
+  private readonly logger = new Logger(UserService.name);
   constructor(
     private readonly prismaService: PrismaService,
     private readonly redisService: RedisService,
@@ -23,6 +24,8 @@ export class UserService {
 
   async getProfile(userId: string): Promise<IProfile> {
     const user = await this.findOneById(userId);
+
+    this.logger.log(`Fetching profile for user: ${userId}`);
 
     return {
       profile: user,

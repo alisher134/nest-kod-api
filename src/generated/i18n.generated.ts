@@ -30,9 +30,6 @@ export type I18nTranslations = {
         required: string;
         min: string;
       };
-      gender: {
-        enum: string;
-      };
       role: {
         enum: string;
       };

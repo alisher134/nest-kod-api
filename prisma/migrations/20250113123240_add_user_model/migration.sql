@@ -1,7 +1,4 @@
 -- CreateEnum
-CREATE TYPE "UserGender" AS ENUM ('MALE', 'FEMALE');
-
--- CreateEnum
 CREATE TYPE "UserRole" AS ENUM ('STUDENT', 'ADMIN');
 
 -- CreateTable
@@ -15,7 +12,6 @@ CREATE TABLE "user" (
     "last_name" TEXT NOT NULL,
     "description" TEXT,
     "avatar_path" TEXT,
-    "gender" "UserGender" NOT NULL DEFAULT 'MALE',
     "role" "UserRole" NOT NULL DEFAULT 'STUDENT',
 
     CONSTRAINT "user_pkey" PRIMARY KEY ("id")

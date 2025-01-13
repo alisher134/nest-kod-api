@@ -4,6 +4,7 @@ import { AcceptLanguageResolver, HeaderResolver, I18nModule, QueryResolver } fro
 import * as path from 'path';
 
 import { AuthModule } from './modules/auth/auth.module';
+import { MediaModule } from './modules/media/media.module';
 import { PrismaModule } from './modules/prisma/prisma.module';
 import { RedisModule } from './modules/redis/redis.module';
 import { UserModule } from './modules/user/user.module';
@@ -31,6 +32,7 @@ import { UserModule } from './modules/user/user.module';
     PrismaModule,
     AuthModule,
     RedisModule,
+    MediaModule,
   ],
 })
 export class AppModule {}
