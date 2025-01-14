@@ -12,7 +12,7 @@ module.exports = {
     node: true,
     jest: true,
   },
-  ignorePatterns: ['.eslintrc.js'],
+  ignorePatterns: ['.eslintrc.js', 'emails/*'],
   rules: {
     '@typescript-eslint/ban-ts-comment': 'error',
     '@typescript-eslint/explicit-function-return-type': ['error'],

@@ -73,7 +73,7 @@ export class AuthController {
     await this.authService.logout(id);
     res.clearCookie(TOKEN_CONSTANTS.REFRESH_TOKEN_COOKIE, {
       httpOnly: true,
-      secure: isProduction,
+      secure: isProduction(this.configService),
       domain: this.configService.getOrThrow<string>('DOMAIN'),
       sameSite: 'lax',
     });
@@ -85,7 +85,7 @@ export class AuthController {
 
     res.cookie(TOKEN_CONSTANTS.REFRESH_TOKEN_COOKIE, refreshToken, {
       httpOnly: true,
-      secure: isProduction,
+      secure: isProduction(this.configService),
       domain: this.configService.getOrThrow<string>('DOMAIN'),
       sameSite: 'lax',
       expires: expiresIn,

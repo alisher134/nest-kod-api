@@ -14,7 +14,8 @@
       "@configs/*": ["./src/configs/*"],
       "@modules/*": ["./src/modules/*"],
       "@common/*": ["./src/common/*"],
-      "@generated/*": ["./src/generated/*"]
+      "@generated/*": ["./src/generated/*"],
+      "@i18n/*": ["./src/i18n/*"]
     },
     "incremental": true,
     "skipLibCheck": true,
@@ -22,6 +23,7 @@
     "noImplicitAny": false,
     "strictBindCallApply": false,
     "forceConsistentCasingInFileNames": false,
-    "noFallthroughCasesInSwitch": false
+    "noFallthroughCasesInSwitch": false,
+    "jsx": "react"
   }
 }

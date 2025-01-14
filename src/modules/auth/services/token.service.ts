@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { I18nService } from 'nestjs-i18n';
@@ -15,6 +15,8 @@ import { IBaseTokenPayload, ITokenOptions, TTokenType } from '../types/token.typ
 
 @Injectable()
 export class TokenService {
+  private readonly logger = new Logger(TokenService.name);
+
   constructor(
     private readonly configService: ConfigService,
     private readonly jwtService: JwtService,
@@ -44,27 +46,17 @@ export class TokenService {
       this.generateToken(payload, refreshTokenOptions),
     ]);
 
-    await Promise.all([
-      this.redisService.set(
-        TOKEN_CONSTANTS.ACCESS_TOKEN_KEY(payload.id),
-        accessToken,
-        parseExpiresIn(accessTokenOptions.expiresIn),
-      ),
-      this.redisService.set(
-        TOKEN_CONSTANTS.REFRESH_TOKEN_KEY(payload.id),
-        refreshToken,
-        parseExpiresIn(refreshTokenOptions.expiresIn),
-      ),
-    ]);
+    await this.redisService.set(
+      TOKEN_CONSTANTS.REFRESH_TOKEN_KEY(payload.id),
+      refreshToken,
+      parseExpiresIn(refreshTokenOptions.expiresIn),
+    );
 
     return { accessToken, refreshToken };
   }
 
   async invalidateTokens(userId: string): Promise<void> {
-    await Promise.all([
-      this.redisService.del(TOKEN_CONSTANTS.ACCESS_TOKEN_KEY(userId)),
-      this.redisService.del(TOKEN_CONSTANTS.REFRESH_TOKEN_KEY(userId)),
-    ]);
+    await this.redisService.del(TOKEN_CONSTANTS.REFRESH_TOKEN_KEY(userId));
   }
 
   async verifyToken<T extends IBaseTokenPayload>(
@@ -74,9 +66,14 @@ export class TokenService {
   ): Promise<T> {
     const payload = await this.jwtService.verifyAsync(token, options);
 
-    const cachedToken = await this.redisService.get(`${type}:${payload.id}`);
-    if (!cachedToken || cachedToken !== token)
-      throw new UnauthorizedException(this.i18nService.t('auth.refreshTokenMissing'));
+    if (type === 'refreshToken') {
+      const cachedToken = await this.redisService.get(
+        TOKEN_CONSTANTS.REFRESH_TOKEN_KEY(payload.id),
+      );
+
+      if (!cachedToken || cachedToken !== token)
+        throw new UnauthorizedException(this.i18nService.t('auth.refreshTokenMissing'));
+    }
 
     return payload;
   }
