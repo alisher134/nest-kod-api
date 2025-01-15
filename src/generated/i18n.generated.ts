@@ -2,10 +2,12 @@ export type I18nTranslations = {
   auth: {
     isExist: string;
     invalid: string;
+    invalidRestoreToken: string;
     refreshTokenMissing: string;
     refreshTokenInvalid: string;
     rights: string;
     tooManyAttempts: string;
+    IsPasswordsMatchingConstraint: string;
   };
   user: {
     notFound: string;
@@ -17,6 +19,10 @@ export type I18nTranslations = {
       password: {
         required: string;
         min: string;
+      };
+      passwordConfirm: {
+        required: string;
+        match: string;
       };
       firstName: {
         required: string;

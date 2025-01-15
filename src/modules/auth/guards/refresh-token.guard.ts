@@ -25,7 +25,7 @@ export class RefreshTokenGuard implements CanActivate {
     }
 
     const payload = await this.tokenService.verifyToken(refreshToken, 'refreshToken', {
-      secret: this.configService.getOrThrow<string>(TOKEN_CONSTANTS.REFRESH_SECRET),
+      secret: this.configService.getOrThrow<string>(TOKEN_CONSTANTS.REFRESH_TOKEN_SECRET),
     });
     request.user = payload;
 

@@ -5,12 +5,10 @@ import { I18nService } from 'nestjs-i18n';
 
 import { RedisService } from '@modules/redis/redis.service';
 
-import { parseExpiresIn } from '@common/utils/token.utils';
-
 import { I18nTranslations } from '@generated/i18n.generated';
 
 import { TOKEN_CONSTANTS } from '../constants/token.constant';
-import { ITokenPayload, ITokens } from '../types/auth.types';
+import { IAuthTokenPayload, IRestoreTokenPayload, ITokens } from '../types/auth.types';
 import { IBaseTokenPayload, ITokenOptions, TTokenType } from '../types/token.types';
 
 @Injectable()
@@ -24,21 +22,21 @@ export class TokenService {
     private readonly i18nService: I18nService<I18nTranslations>,
   ) {}
 
-  async generateTokenPair(payload: ITokenPayload): Promise<ITokens> {
+  async generateTokenPair(payload: IAuthTokenPayload): Promise<ITokens> {
     const accessTokenOptions = {
       expiresIn: this.configService.get<string>(
-        TOKEN_CONSTANTS.ACCESS_EXP,
-        TOKEN_CONSTANTS.DEFAULT_ACCESS_EXP,
+        TOKEN_CONSTANTS.ACCESS_TOKEN_EXP,
+        TOKEN_CONSTANTS.DEFAULT_ACCESS_TOKEN_EXP,
       ),
-      secret: this.configService.getOrThrow<string>(TOKEN_CONSTANTS.ACCESS_SECRET),
+      secret: this.configService.getOrThrow<string>(TOKEN_CONSTANTS.ACCESS_TOKEN_SECRET),
     };
 
     const refreshTokenOptions = {
       expiresIn: this.configService.get<string>(
-        TOKEN_CONSTANTS.REFRESH_EXP,
-        TOKEN_CONSTANTS.DEFAULT_REFRESH_EXP,
+        TOKEN_CONSTANTS.REFRESH_TOKEN_EXP,
+        TOKEN_CONSTANTS.DEFAULT_REFRESH_TOKEN_EXP,
       ),
-      secret: this.configService.getOrThrow<string>(TOKEN_CONSTANTS.REFRESH_SECRET),
+      secret: this.configService.getOrThrow<string>(TOKEN_CONSTANTS.REFRESH_TOKEN_SECRET),
     };
 
     const [accessToken, refreshToken] = await Promise.all([
@@ -49,10 +47,17 @@ export class TokenService {
     await this.redisService.set(
       TOKEN_CONSTANTS.REFRESH_TOKEN_KEY(payload.id),
       refreshToken,
-      parseExpiresIn(refreshTokenOptions.expiresIn),
+      TOKEN_CONSTANTS.REFRESH_TOKEN_TTL,
     );
 
     return { accessToken, refreshToken };
+  }
+
+  async generateRestoreToken(payload: IRestoreTokenPayload): Promise<string> {
+    return await this.generateToken(payload, {
+      secret: TOKEN_CONSTANTS.RESTORE_TOKEN_SECRET,
+      expiresIn: TOKEN_CONSTANTS.RESTORE_TOKEN_EXP,
+    });
   }
 
   async invalidateTokens(userId: string): Promise<void> {

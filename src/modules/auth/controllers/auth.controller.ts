@@ -6,13 +6,13 @@ import { CurrentUser } from '@modules/user/decorators/user.decorator';
 
 import { isProduction } from '@common/utils/production.utils';
 
-import { TOKEN_CONSTANTS } from './constants/token.constant';
-import { LoginDto } from './dtos/login.dto';
-import { RegisterDto } from './dtos/register.dto';
-import { AccessTokenGuard } from './guards/access-token.guard';
-import { RefreshTokenGuard } from './guards/refresh-token.guard';
-import { AuthService } from './services/auth.service';
-import { TAccessToken } from './types/auth.types';
+import { TOKEN_CONSTANTS } from '../constants/token.constant';
+import { LoginDto } from '../dtos/login.dto';
+import { RegisterDto } from '../dtos/register.dto';
+import { AccessTokenGuard } from '../guards/access-token.guard';
+import { RefreshTokenGuard } from '../guards/refresh-token.guard';
+import { AuthService } from '../services/auth.service';
+import { TAccessToken } from '../types/auth.types';
 
 @Controller('auth')
 export class AuthController {

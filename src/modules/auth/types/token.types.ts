@@ -1,4 +1,4 @@
-export type TTokenType = 'accessToken' | 'refreshToken';
+export type TTokenType = 'accessToken' | 'refreshToken' | 'restore';
 export interface IBaseTokenPayload {
   id: string;
 }

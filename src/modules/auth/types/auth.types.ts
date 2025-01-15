@@ -7,6 +7,11 @@ export interface ITokens {
   refreshToken: string;
 }
 
-export interface ITokenPayload {
+export interface IAuthTokenPayload {
   id: string;
+}
+
+export interface IRestoreTokenPayload {
+  id: string;
+  email: string;
 }

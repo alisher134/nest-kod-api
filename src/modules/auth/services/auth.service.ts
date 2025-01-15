@@ -13,7 +13,7 @@ import { AUTH_CONSTANTS } from '../constants/auth.constants';
 import { TOKEN_CONSTANTS } from '../constants/token.constant';
 import { LoginDto } from '../dtos/login.dto';
 import { RegisterDto } from '../dtos/register.dto';
-import { ITokenPayload, ITokens } from '../types/auth.types';
+import { IAuthTokenPayload, ITokens } from '../types/auth.types';
 
 import { TokenService } from './token.service';
 
@@ -62,11 +62,11 @@ export class AuthService {
 
   async refresh(refreshToken: string): Promise<ITokens> {
     try {
-      const payload: ITokenPayload = await this.tokenService.verifyToken(
+      const payload: IAuthTokenPayload = await this.tokenService.verifyToken(
         refreshToken,
         'refreshToken',
         {
-          secret: this.configService.getOrThrow<string>(TOKEN_CONSTANTS.REFRESH_SECRET),
+          secret: this.configService.getOrThrow<string>(TOKEN_CONSTANTS.REFRESH_TOKEN_SECRET),
         },
       );
 
@@ -115,9 +115,9 @@ export class AuthService {
 
   private async validateUser(dto: LoginDto): Promise<User> {
     const user = await this.userService.findOneByEmail(dto.email);
+    const isMatch = await verify(user.passwordHash, dto.password);
 
-    if (!user || !(await verify(user.passwordHash, dto.password)))
-      throw new BadRequestException(this.i18nService.t('auth.invalid'));
+    if (!user || !isMatch) throw new BadRequestException(this.i18nService.t('auth.invalid'));
 
     return user;
   }
