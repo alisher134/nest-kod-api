@@ -1,10 +1,7 @@
 import { Body, Controller, HttpCode, HttpStatus, Patch, Post } from '@nestjs/common';
 import { User } from '@prisma/client';
 
-import { CurrentUser } from '@modules/user/decorators/user.decorator';
-
-import { Auth } from '@common/decorators/auth.decorator';
-
+import { ResetPasswordDto } from '../dtos/reset-password.dto';
 import { RestorePasswordDto } from '../dtos/restore-password.dto';
 import { AccountService } from '../services/account.service';
 
@@ -12,17 +9,15 @@ import { AccountService } from '../services/account.service';
 export class AccountController {
   constructor(private readonly accountService: AccountService) {}
 
-  @Auth()
-  @Post('restore-password-token')
+  @Post('restore-password')
   @HttpCode(HttpStatus.OK)
-  restorePasswordToken(@CurrentUser('email') email: string): Promise<void> {
-    return this.accountService.generateRestorePasswordToken(email);
+  restorePasswordToken(@Body() dto: RestorePasswordDto): Promise<void> {
+    return this.accountService.generateRestorePasswordToken(dto);
   }
 
-  @Auth()
-  @Patch('restore-password')
+  @Patch('reset-password')
   @HttpCode(HttpStatus.OK)
-  restorePassword(@Body() dto: RestorePasswordDto): Promise<User> {
+  resetPassword(@Body() dto: ResetPasswordDto): Promise<User> {
     return this.accountService.restorePassword(dto);
   }
 }

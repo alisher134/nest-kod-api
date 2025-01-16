@@ -1,7 +1,8 @@
-import { Module } from '@nestjs/common';
+import { Global, Module } from '@nestjs/common';
 import { AcceptLanguageResolver, I18nModule } from 'nestjs-i18n';
 import * as path from 'path';
 
+@Global()
 @Module({
   imports: [
     I18nModule.forRoot({

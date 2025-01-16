@@ -16,13 +16,12 @@ import React from "react";
 
 interface IResetPasswordProps {
     email: string;
-    restoreToken:string
+    resetLink:string
 }
 
-const API_URL = process.env.APP_URL;
-const REACT_URL = process.env.ALLOWED_ORIGIN;
+export default function ResetPassword({ email, resetLink }: IResetPasswordProps):React.JSX.Element {
+    const API_URL = process.env.APP_URL;
 
-export default function ResetPassword({ email, restoreToken }: IResetPasswordProps):React.JSX.Element {
     return (
         <Html>
         <Head>
@@ -57,7 +56,7 @@ export default function ResetPassword({ email, restoreToken }: IResetPasswordPro
                 <Section>
                     <Button
                         style={styles.button}
-                        href={`${REACT_URL}/auth/restore?token=${restoreToken}`}
+                        href={resetLink}
                     >
                         Изменение пароля
                     </Button>

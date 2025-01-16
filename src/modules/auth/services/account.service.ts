@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { User } from '@prisma/client';
 import { hash } from 'argon2';
 import { I18nService } from 'nestjs-i18n';
@@ -12,6 +12,7 @@ import { UserService } from '@modules/user/user.service';
 import { I18nTranslations } from '@generated/i18n.generated';
 
 import { TOKEN_CONSTANTS } from '../constants/token.constant';
+import { ResetPasswordDto } from '../dtos/reset-password.dto';
 import { RestorePasswordDto } from '../dtos/restore-password.dto';
 import { IRestoreTokenPayload } from '../types/auth.types';
 
@@ -19,6 +20,8 @@ import { TokenService } from './token.service';
 
 @Injectable()
 export class AccountService {
+  private readonly logger = new Logger(AccountService.name);
+
   constructor(
     private readonly emailService: EmailService,
     private readonly tokenService: TokenService,
@@ -28,15 +31,19 @@ export class AccountService {
     private readonly i18nService: I18nService<I18nTranslations>,
   ) {}
 
-  async generateRestorePasswordToken(email: string): Promise<void> {
-    const user = await this.userService.findOneByEmail(email);
+  async generateRestorePasswordToken(dto: RestorePasswordDto): Promise<void> {
+    const user = await this.userService.findOneByEmail(dto.email);
     if (!user) throw new NotFoundException(this.i18nService.t('user.notFound'));
 
-    const restoreToken = await this.tokenService.generateRestoreToken({ id: user.id, email });
-    await this.emailService.sendResetPassword(email, restoreToken);
+    const restoreToken = await this.tokenService.generateRestoreToken({
+      id: user.id,
+      email: dto.email,
+    });
+
+    await this.emailService.sendResetPassword(dto.email, restoreToken, user.id);
   }
 
-  async restorePassword(dto: RestorePasswordDto): Promise<User> {
+  async restorePassword(dto: ResetPasswordDto): Promise<User> {
     const decoded = await this.tokenService.verifyToken<IRestoreTokenPayload>(
       dto.token,
       'restore',
@@ -61,8 +68,10 @@ export class AccountService {
       this.redisService.del(USER_CONSTANTS.USER_KEY(user.email)),
       this.redisService.del(USER_CONSTANTS.USER_KEY(user.id)),
       this.redisService.set(USER_CONSTANTS.USER_KEY(user.email), JSON.stringify(user)),
-      this.redisService.set(USER_CONSTANTS.USER_KEY(user.email), JSON.stringify(user)),
+      this.redisService.set(USER_CONSTANTS.USER_KEY(user.id), JSON.stringify(user)),
     ]);
+
+    this.logger.log(`Password updated for user ${user.id}`);
 
     return user;
   }
