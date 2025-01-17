@@ -19,7 +19,7 @@
     "start": "nest start",
     "start:dev": "dotenv -e .env.development -- nest start --watch",
     "start:debug": "nest start --debug --watch",
-    "start:prod": "node dist/main",
+    "start:prod": "yarn prisma migrate deploy && node dist/src/main",
     "lint": "eslint \"src/**/*.{ts,tsx}\" --fix",
     "test": "jest",
     "test:watch": "jest --watch",
@@ -29,6 +29,8 @@
     "prepare": "husky",
     "docker:dev": "docker-compose --env-file .env.development -f docker-compose.dev.yml up -d",
     "prisma:migrate": "dotenv -e .env.development -- yarn prisma migrate dev",
+    "prisma:deploy": "yarn prisma migrate deploy",
+    "prisma:generate": "yarn prisma generate",
     "email:dev": "email dev"
   },
   "dependencies": {
