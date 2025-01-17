@@ -19,7 +19,7 @@ export class RefreshTokenGuard implements CanActivate {
   async canActivate(ctx: ExecutionContext): Promise<boolean> {
     const request = ctx.switchToHttp().getRequest<Request>();
 
-    const refreshToken = request.cookies?.[TOKEN_CONSTANTS.REFRESH_TOKEN_COOKIE];
+    const refreshToken = request.cookies[TOKEN_CONSTANTS.REFRESH_TOKEN_COOKIE];
     if (!refreshToken) {
       throw new UnauthorizedException(this.i18nService.t('auth.refreshTokenMissing'));
     }

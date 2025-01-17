@@ -1,16 +1,28 @@
-import { Body, Controller, HttpCode, HttpStatus, Post, Req, Res, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  HttpCode,
+  HttpStatus,
+  Post,
+  Req,
+  Res,
+  UnauthorizedException,
+  UseGuards,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Request, Response } from 'express';
+import { I18nService } from 'nestjs-i18n';
 
 import { CurrentUser } from '@modules/user/decorators/user.decorator';
 
 import { isProduction } from '@common/utils/production.utils';
 
+import { I18nTranslations } from '@generated/i18n.generated';
+
 import { TOKEN_CONSTANTS } from '../constants/token.constant';
 import { LoginDto } from '../dtos/login.dto';
 import { RegisterDto } from '../dtos/register.dto';
 import { AccessTokenGuard } from '../guards/access-token.guard';
-import { RefreshTokenGuard } from '../guards/refresh-token.guard';
 import { AuthService } from '../services/auth.service';
 import { TAccessToken } from '../types/auth.types';
 
@@ -19,6 +31,7 @@ export class AuthController {
   constructor(
     private readonly authService: AuthService,
     private readonly configService: ConfigService,
+    private readonly i18nService: I18nService<I18nTranslations>,
   ) {}
 
   @Post('register')
@@ -47,7 +60,7 @@ export class AuthController {
     return { accessToken };
   }
 
-  @UseGuards(RefreshTokenGuard)
+  // @UseGuards(RefreshTokenGuard)
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
   async refresh(
@@ -55,6 +68,9 @@ export class AuthController {
     @Res({ passthrough: true }) res: Response,
   ): Promise<TAccessToken> {
     const refreshTokenFromCookie = req.cookies[TOKEN_CONSTANTS.REFRESH_TOKEN_COOKIE];
+    if (!refreshTokenFromCookie) {
+      throw new UnauthorizedException(this.i18nService.t('auth.refreshTokenMissing'));
+    }
 
     const { refreshToken, accessToken } = await this.authService.refresh(refreshTokenFromCookie);
 

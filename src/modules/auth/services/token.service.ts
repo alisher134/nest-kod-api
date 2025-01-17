@@ -24,18 +24,12 @@ export class TokenService {
 
   async generateTokenPair(payload: IAuthTokenPayload): Promise<ITokens> {
     const accessTokenOptions = {
-      expiresIn: this.configService.get<string>(
-        TOKEN_CONSTANTS.ACCESS_TOKEN_EXP,
-        TOKEN_CONSTANTS.DEFAULT_ACCESS_TOKEN_EXP,
-      ),
+      expiresIn: TOKEN_CONSTANTS.ACCESS_TOKEN_EXP,
       secret: this.configService.getOrThrow<string>(TOKEN_CONSTANTS.ACCESS_TOKEN_SECRET),
     };
 
     const refreshTokenOptions = {
-      expiresIn: this.configService.get<string>(
-        TOKEN_CONSTANTS.REFRESH_TOKEN_EXP,
-        TOKEN_CONSTANTS.DEFAULT_REFRESH_TOKEN_EXP,
-      ),
+      expiresIn: TOKEN_CONSTANTS.REFRESH_TOKEN_EXP,
       secret: this.configService.getOrThrow<string>(TOKEN_CONSTANTS.REFRESH_TOKEN_SECRET),
     };
 
@@ -55,7 +49,7 @@ export class TokenService {
 
   async generateRestoreToken(payload: IRestoreTokenPayload): Promise<string> {
     return await this.generateToken(payload, {
-      secret: TOKEN_CONSTANTS.RESTORE_TOKEN_SECRET,
+      secret: this.configService.get(TOKEN_CONSTANTS.RESTORE_TOKEN_SECRET),
       expiresIn: TOKEN_CONSTANTS.RESTORE_TOKEN_EXP,
     });
   }
