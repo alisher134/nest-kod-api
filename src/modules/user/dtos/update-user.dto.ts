@@ -1,5 +1,4 @@
-import { UserRole } from '@prisma/client';
-import { IsEnum, IsOptional, IsString, MinLength } from 'class-validator';
+import { IsOptional, IsString, MinLength } from 'class-validator';
 import { i18nValidationMessage } from 'nestjs-i18n';
 
 import { I18nTranslations } from '@generated/i18n.generated';
@@ -31,10 +30,4 @@ export class UpdateUserDto {
     message: i18nValidationMessage<I18nTranslations>('user.validation.description.min'),
   })
   description: string;
-
-  @IsOptional()
-  @IsEnum(UserRole, {
-    message: i18nValidationMessage<I18nTranslations>('user.validation.role.enum'),
-  })
-  role: UserRole;
 }

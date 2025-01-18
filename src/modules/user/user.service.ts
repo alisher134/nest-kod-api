@@ -93,11 +93,10 @@ export class UserService {
   }
 
   async update(id: string, dto: UpdateUserDto): Promise<User> {
-    const user = await this.findOneById(id);
+    await this.findOneById(id);
 
     const userData: Prisma.UserUpdateInput = {
       ...dto,
-      role: user.role === 'ADMIN' ? dto.role : 'STUDENT',
     };
 
     const updateUser = await this.prismaService.user.update({

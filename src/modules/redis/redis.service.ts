@@ -6,11 +6,9 @@ import Redis from 'ioredis';
 export class RedisService {
   private readonly redis: Redis;
   constructor(private readonly configService: ConfigService) {
-    this.redis = new Redis({
-      host: this.configService.get('REDIS_HOST'),
-      port: this.configService.get('REDIS_PORT'),
-      password: this.configService.get('REDIS_PASSWORD'),
-    });
+    const REDIS_URI = this.configService.get<string>('REDIS_URI');
+
+    this.redis = new Redis(REDIS_URI);
   }
 
   async set(key: string, value: string, ttl?: number): Promise<void> {
